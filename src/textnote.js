@@ -78,6 +78,42 @@ export class TextNote extends Note {
       'turn_inverted': {
         code: 'ornamentTurnSlash',
       },
+      'diminished': {
+        code: 'csymDiminished'
+      },
+      'halfDiminished': {
+        code: 'csymHalfDiminished'
+      },
+      'augmented': {
+        code: 'csymAugmented'
+      },
+      'majorSeventh': {
+        code: 'csymMajorSeventh'
+      },
+      'minor': {
+        code: 'csymMinor'
+      },
+      'leftParen': {
+        code: 'csymParensLeftTall'
+      },
+      'rightParen': {
+        code: 'csymParensRightTall'
+      },
+      'leftBracket': {
+        code: 'csymBracketLeftTall'
+      },
+      'rightBracket': {
+        code: 'csymBracketRightTall'
+      },
+      'leftParenTall': {
+        code: 'csymBracketLeftTall'
+      },
+      'rightParentTall': {
+        code: 'csymParensRightVeryTall'
+      },
+      'over': {
+        code: 'csymDiagonalArrangementSlash'
+      }
     };
   }
 
