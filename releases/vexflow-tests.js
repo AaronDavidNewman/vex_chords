@@ -1,5 +1,5 @@
 /**!
- * VexFlow 3.0.9 built on 2020-04-21.
+ * VexFlow 3.0.9 built on 2020-05-02.
  * Copyright (c) 2010 Mohit Muthanna Cheppudira <mohit@muthanna.com>
  *
  * http://www.vexflow.com  http://github.com/0xfe/vexflow
@@ -4147,6 +4147,217 @@ VF.Test.BoundingBox = (function() {
 })();
 
 /**
+ * VexFlow - Annotation Tests
+ * Copyright Mohit Muthanna 2010 <mohit@muthanna.com>
+ */
+
+VF.Test.ChordSymbol = (function() {
+  var runSVG = VF.Test.runSVGTest;
+  var ChordSymbol = {
+    Start: function() {
+      QUnit.module('ChordSymbol');
+      runSVG('Top Chord Symbols', ChordSymbol.top);
+      runSVG('Kitchen Sink Chord Symbols', ChordSymbol.first);
+      runSVG('Bottom Chord Symbols', ChordSymbol.bottom);
+      runSVG('Double Bottom Chord Symbols', ChordSymbol.dblbottom);
+    },
+
+    first: function(options) {
+      var vf = VF.Test.makeFactory(options, 500, 220);
+      var ctx = vf.getContext();
+      ctx.scale(1.5, 1.5); ctx.fillStyle = '#221'; ctx.strokeStyle = '#221';
+
+      function newNote(keys, duration, chordSymbol) {
+        return new VF.StaveNote({ keys, duration }).addModifier(0, chordSymbol);
+      }
+
+      function draw(chord1, chord2, y) {
+        var notes = [];
+
+        var stave = new VF.Stave(10, y, 450)
+          .addClef('treble').setContext(ctx).draw();
+
+        notes.push(newNote(['C/5'], 'h', chord1));
+        notes.push(newNote(['C/5'], 'h', chord2));
+        VF.Formatter.FormatAndDraw(ctx, stave, notes);
+      }
+
+      var chord1 = new VF.ChordSymbol().addGlyph('leftParenTall')
+        .setHorizontal('left').addText('C')
+        .addGlyphOrText('+5#11b9(sus4)', { symbolModifier: VF.ChordSymbol.SymbolModifiers.SUPERSCRIPT })
+        .addGlyph('rightParenTall');
+
+      var chord2 = new VF.ChordSymbol()
+        .addText('C').addSuperGlyph('-').addText('F')
+        .addSuperGlyph('halfDiminished');
+      draw(chord1, chord2, 40);
+
+      ok(true, 'Kitchen Sink Chord Symbol');
+    },
+
+    top: function(options) {
+      var vf = VF.Test.makeFactory(options, 500, 580);
+      var ctx = vf.getContext();
+      ctx.scale(1.5, 1.5); ctx.fillStyle = '#221'; ctx.strokeStyle = '#221';
+
+      function newNote(keys, duration, chordSymbol) {
+        return new VF.StaveNote({ keys, duration }).addModifier(0, chordSymbol);
+      }
+
+      function draw(chord1, chord2, y) {
+        var notes = [];
+
+        var stave = new VF.Stave(10, y, 450)
+          .addClef('treble').setContext(ctx).draw();
+
+        notes.push(newNote(['e/4', 'a/4', 'd/5'], 'h', chord1)
+          .addAccidental(0, new VF.Accidental('b')));
+        notes.push(newNote(['c/4', 'e/4', 'B/4'], 'h', chord2));
+        VF.Formatter.FormatAndDraw(ctx, stave, notes);
+      }
+
+      var chord1 = new VF.ChordSymbol().addText('F7').setHorizontal('left')
+        .addGlyphOrText('(#11b9)', { symbolModifier: VF.ChordSymbol.SymbolModifiers.SUPERSCRIPT });
+      var chord2 = new VF.ChordSymbol()
+        .addText('C')
+        .addSuperGlyph('majorSeventh');
+      draw(chord1, chord2, 40);
+
+      chord1 = new VF.ChordSymbol().addText('F7').setHorizontal('left')
+        .addSuperText('(')
+        .addGlyphOrText('#11b9', { symbolModifier: VF.ChordSymbol.SymbolModifiers.SUPERSCRIPT })
+        .addSuperText(')');
+      chord2 = new VF.ChordSymbol()
+        .addText('C')
+        .addSuperText('Maj.');
+      draw(chord1, chord2, 140);
+
+      chord1 = new VF.ChordSymbol().addText('F7').setHorizontal('left')
+        .addGlyphOrText('#11', { symbolModifier: VF.ChordSymbol.SymbolModifiers.SUPERSCRIPT })
+        .addGlyphOrText('b9', { symbolModifier: VF.ChordSymbol.SymbolModifiers.SUBSCRIPT });
+      chord2 = new VF.ChordSymbol()
+        .addText('C')
+        .addSuperText('Maj.');
+      draw(chord1, chord2, 240);
+
+      ok(true, 'Top Chord Symbol');
+    },
+
+    dblbottom: function(options) {
+      var vf = VF.Test.makeFactory(options, 600, 260);
+      var ctx = vf.getContext();
+      ctx.scale(1.5, 1.5); ctx.fillStyle = '#221'; ctx.strokeStyle = '#221';
+
+      function newNote(keys, duration, chordSymbol1, chordSymbol2) {
+        return new VF.StaveNote({ keys, duration })
+          .addModifier(0, chordSymbol1)
+          .addModifier(0, chordSymbol2);
+      }
+
+      function draw(chords, chords2, y) {
+        var notes = [];
+
+        var stave = new VF.Stave(10, y, 450)
+          .addClef('treble').setContext(ctx).draw();
+
+        notes.push(newNote(['c/4', 'f/4', 'a/4'], 'q', chords[0], chords2[0]));
+        notes.push(newNote(['c/4', 'e/4', 'b/4'], 'q', chords[1], chords2[1]).addAccidental(2, new VF.Accidental('b')));
+        notes.push(newNote(['c/4', 'e/4', 'g/4'], 'q', chords[2], chords2[2]));
+        notes.push(newNote(['c/4', 'f/4', 'a/4'], 'q', chords[3], chords2[3]).addAccidental(1, new VF.Accidental('#')));
+        VF.Formatter.FormatAndDraw(ctx, stave, notes);
+      }
+      var chords = [];
+      var chords2 = [];
+
+      chords.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('serif', 12)
+        .addText('I')
+        .addSuperText('6')
+        .addSubText('4'));
+      chords.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .addGlyphOrText('V')
+        .setFont('serif', 12));
+      chords.push(new VF.ChordSymbol()
+        .addLine(12)
+        .setVertical('bottom'));
+      chords.push(new VF.ChordSymbol()
+        .addGlyphOrText('V/V')
+        .setVertical('bottom')
+        .setFont('serif', 12));
+
+      chords2.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('sans', 12, 'bold')
+        .addText('T'));
+      chords2.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('sans', 12, 'bold')
+        .addText('D'));
+      chords2.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('sans', 12, 'bold')
+        .addText('D'));
+      chords2.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('sans', 12, 'bold')
+        .addText('SD'));
+
+      draw(chords, chords2, 10);
+      ok(true, '2 Bottom Chord Symbol');
+    },
+
+    bottom: function(options) {
+      var vf = VF.Test.makeFactory(options, 600, 230);
+      var ctx = vf.getContext();
+      ctx.scale(1.5, 1.5); ctx.fillStyle = '#221'; ctx.strokeStyle = '#221';
+
+      function newNote(keys, duration, chordSymbol) {
+        return new VF.StaveNote({ keys, duration }).addModifier(0, chordSymbol);
+      }
+
+      function draw(chords, y) {
+        var notes = [];
+
+        var stave = new VF.Stave(10, y, 400)
+          .addClef('treble').setContext(ctx).draw();
+
+        notes.push(newNote(['c/4', 'f/4', 'a/4'], 'q', chords[0]));
+        notes.push(newNote(['c/4', 'e/4', 'b/4'], 'q', chords[1]).addAccidental(2, new VF.Accidental('b')));
+        notes.push(newNote(['c/4', 'e/4', 'g/4'], 'q', chords[2]));
+        notes.push(newNote(['c/4', 'f/4', 'a/4'], 'q', chords[3]).addAccidental(1, new VF.Accidental('#')));
+        VF.Formatter.FormatAndDraw(ctx, stave, notes);
+      }
+      var chords = [];
+
+      chords.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .setFont('serif', 12)
+        .addText('I')
+        .addSuperText('6')
+        .addSubText('4'));
+      chords.push(new VF.ChordSymbol()
+        .setVertical('bottom')
+        .addGlyphOrText('V')
+        .setFont('serif', 12));
+      chords.push(new VF.ChordSymbol()
+        .addLine(12)
+        .setVertical('bottom'));
+      chords.push(new VF.ChordSymbol()
+        .addGlyphOrText('V/V')
+        .setVertical('bottom')
+        .setFont('serif', 12));
+
+      draw(chords, 10);
+      ok(true, 'Bottom Chord Symbol');
+    },
+  };
+
+  return ChordSymbol;
+})();
+
+/**
  * VexFlow - Clef Tests
  * Copyright Mohit Muthanna 2010 <mohit@muthanna.com>
  */
@@ -5487,16 +5698,12 @@ VF.Test.Formatter = (function() {
         title: '460px,softmax:100'
       }];
 
-      // Configure the rendering context.
-
-      var adjX = 11;
       var rowSize = 140;
       var beats = 12;
       var beatsPer = 8;
       var beamGroup = 3;
 
       var durations = ['8d', '16', '8', '8d', '16', '8', '8d', '16', '8', '4', '8'];
-
       var beams = [];
       var y = 40;
 
@@ -5508,13 +5715,8 @@ VF.Test.Formatter = (function() {
         y += rowSize;
 
         durations.forEach((dd) => {
-          var newNote = new VF.StaveNote({
-            keys: ['b/4'],
-            duration: dd
-          });
-          if (dd.indexOf('d') >= 0) {
-            newNote.addDotToAll();
-          }
+          var newNote = new VF.StaveNote({ keys: ['b/4'], duration: dd });
+          if (dd.indexOf('d') >= 0) { newNote.addDotToAll(); }
           if (sm.lyrics.length > iii) {
             newNote.addAnnotation(0,
               new VF.Annotation(sm.lyrics[iii])
@@ -5525,11 +5727,9 @@ VF.Test.Formatter = (function() {
           iii += 1;
         });
 
-        notes.forEach((note) => {
-          if (note.duration.indexOf('d') >= 0) {
-            note.addDotToAll();
-          }
-        });
+        notes.forEach((note) => { if (note.duration.indexOf('d') >= 0) { note.addDotToAll(); } });
+
+        // Don't beam the last group
         var beam = [];
         notes.forEach((note) => {
           if (note.intrinsicTicks < 4096) {
@@ -5545,27 +5745,13 @@ VF.Test.Formatter = (function() {
           }
         });
 
-        var voice1 = new VF.Voice({
-          num_beats: beats,
-          beat_value: beatsPer
-        }).setMode(Vex.Flow.Voice.Mode.SOFT).addTickables(notes);
+        var voice1 = new VF.Voice({ num_beats: beats, beat_value: beatsPer }).setMode(Vex.Flow.Voice.Mode.SOFT).addTickables(notes);
 
-        var fmt = new VF.Formatter({
-          softmaxFactor: sm.sm
-        }).joinVoices([voice1]);
+        var fmt = new VF.Formatter({ softmaxFactor: sm.sm }).joinVoices([voice1]);
+        fmt.format([voice1], sm.width - 11);
 
-        fmt.format([voice1], sm.width - adjX);
-
-        var group = context.openGroup();
-        group.id = 'mm-' + sm.sm;
-
-
-        // Connect it to the rendering context and draw!
         stave.setContext(context).draw();
-
         voice1.draw(context, stave);
-
-        context.closeGroup();
 
         beams.forEach(function(b) {
           b.setContext(context).draw();
@@ -15594,6 +15780,7 @@ VF.Test.run = function() {
   VF.Test.Vibrato.Start();
   VF.Test.VibratoBracket.Start();
   VF.Test.Annotation.Start();
+  VF.Test.ChordSymbol.Start();
   VF.Test.Tuning.Start();
   VF.Test.Music.Start();
   VF.Test.KeyManager.Start();
