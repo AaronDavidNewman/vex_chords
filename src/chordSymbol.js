@@ -61,8 +61,14 @@ export class ChordSymbol extends Modifier {
       'diminished': {
         code: 'csymDiminished'
       },
+      'dim': {
+        code: 'csymDiminished'
+      },
       'halfDiminished': {
         code: 'csymHalfDiminished'
+      },
+      '+': {
+        code: 'csymAugmented'
       },
       'augmented': {
         code: 'csymAugmented'
@@ -95,10 +101,13 @@ export class ChordSymbol extends Modifier {
         code: 'csymBracketRightTall'
       },
       'leftParenTall': {
-        code: 'csymBracketLeftTall'
+        code: 'csymParensLeftVeryTall'
       },
-      'rightParentTall': {
+      'rightParenTall': {
         code: 'csymParensRightVeryTall'
+      },
+      '/': {
+        code: 'csymDiagonalArrangementSlash'
       },
       'over': {
         code: 'csymDiagonalArrangementSlash'
@@ -152,8 +161,17 @@ export class ChordSymbol extends Modifier {
         const symbol = instance.symbolBlocks[j];
         const sup = instance.isSuperscript(symbol);
         const sub = instance.isSubscript(symbol);
+
+        // If there are super/subscripts, they extend beyond the line so
+        // assume they take up 2 lines
         if (sup || sub) {
           lineSpaces = 2;
+        }
+
+        if (symbol.symbolType === ChordSymbol.SymbolTypes &&
+          symbol.glyph.code === ChordSymbol.GLYPHS.over.code) {
+          lineSpaces = 2;
+          symbol.xOffset = -1 * (symbol.glyph.width / 4);
         }
 
         // If a subscript immediately  follows a superscript block, try to
@@ -180,8 +198,8 @@ export class ChordSymbol extends Modifier {
         instance.setTextLine(state.top_text_line);
         state.top_text_line += lineSpaces;
       } else {
-        instance.setTextLine(state.text_line);
-        state.text_line += lineSpaces;
+        instance.setTextLine(state.text_line + 1);
+        state.text_line += lineSpaces + 1;
       }
     }
 
@@ -254,6 +272,24 @@ export class ChordSymbol extends Modifier {
     parameters.text = text;
     parameters.symbolType = ChordSymbol.SymbolTypes.TEXT;
     return this.addSymbolBlock(parameters);
+  }
+
+  addSuperText(text) {
+    const symbolType = ChordSymbol.SymbolTypes.TEXT;
+    const symbolModifier = ChordSymbol.SymbolModifiers.SUPERSCRIPT;
+    return this.addSymbolBlock({ text, symbolType, symbolModifier });
+  }
+
+  addSubText(text) {
+    const symbolType = ChordSymbol.SymbolTypes.TEXT;
+    const symbolModifier = ChordSymbol.SymbolModifiers.SUBSCRIPT;
+    return this.addSymbolBlock({ text, symbolType, symbolModifier });
+  }
+
+  addSuperGlyph(glyph) {
+    const symbolType = ChordSymbol.SymbolTypes.GLYPH;
+    const symbolModifier = ChordSymbol.SymbolModifiers.SUPERSCRIPT;
+    return this.addSymbolBlock({ glyph, symbolType, symbolModifier });
   }
 
   addGlyph(glyph, parameters) {
@@ -398,10 +434,10 @@ export class ChordSymbol extends Modifier {
       let curY = y;
 
       if (sp) {
-        curY -= 10;
+        curY -= 8;
       }
       if (sub) {
-        curY += 10;
+        curY += 4;
       }
 
       if (symbol.symbolType === ChordSymbol.SymbolTypes.TEXT) {
@@ -409,6 +445,10 @@ export class ChordSymbol extends Modifier {
           this.context.save();
           this.context.setFont(this.font.family, this.font.size / 1.3, this.font.weight);
         }
+        // We estimate the text width, fill it in with the empirical value so the
+        // formatting is even.
+        symbol.width = this.context.measureText(symbol.text).width;
+        symbol.width = (symbol.width * 4) / 3;
         this.context.fillText(symbol.text, x + symbol.x_offset, curY);
         if (sp || sub) {
           this.context.restore();
@@ -416,7 +456,7 @@ export class ChordSymbol extends Modifier {
       } else if (symbol.symbolType === ChordSymbol.SymbolTypes.GLYPH) {
         curY -= symbol.glyph.bbox.y + symbol.glyph.bbox.h;
         curY += (symbol.glyph.bbox.h > 12 ? symbol.glyph.bbox.h - 12 : 0);
-        symbol.glyph.render(this.context, x + (symbol.width / 4) + symbol.x_offset, curY);
+        symbol.glyph.render(this.context, x + symbol.x_offset, curY);
       } else if (symbol.symbolType === ChordSymbol.SymbolTypes.LINE) {
         this.context.beginPath();
         this.context.setLineWidth(1); // ?
@@ -425,7 +465,7 @@ export class ChordSymbol extends Modifier {
         this.context.stroke();
       }
 
-      x += symbol.width;
+      x += symbol.width + symbol.x_offset;
     });
 
     L('Rendering annotation: ', this.text, x, y);
