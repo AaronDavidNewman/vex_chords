@@ -2,10 +2,11 @@
 //
 // ## Description
 //
-// This file implements text annotations as modifiers that can be attached to
-// notes.
+// This file implements chord symbols as modifiers that can be attached to
+// notes.  Chord symbols can contain multiple 'blocks' which can contain
+// text or glyphs with various positioning options.
 //
-// See `tests/annotation_tests.js` for usage examples.
+// See `tests/chordsymbol_tests.js` for usage examples.
 
 import { Vex } from './vex';
 import { Flow } from './tables';
@@ -141,21 +142,46 @@ export class ChordSymbol extends Modifier {
     if (!instances || instances.length === 0) return false;
 
     let width = 0;
+    let nonSuperWidth = 0;
+
     for (let i = 0; i < instances.length; ++i) {
       const instance = instances[i];
-
-      // todo: fix this, consider whole shape
-      if (instance.getPosition() === Modifier.Position.ABOVE) {
-        instance.setTextLine(state.top_text_line);
-        state.top_text_line++;
-      } else {
-        instance.setTextLine(state.text_line);
-        state.text_line++;
-      }
+      let lineSpaces = 1;
 
       for (let j = 0; j < instance.symbolBlocks.length; ++j) {
         const symbol = instance.symbolBlocks[j];
+        const sup = instance.isSuperscript(symbol);
+        const sub = instance.isSubscript(symbol);
+        if (sup || sub) {
+          lineSpaces = 2;
+        }
+
+        // If a subscript immediately  follows a superscript block, try to
+        // overlay them.
+        if (sup && j > 0) {
+          const prev = instance.symbolBlocks[j - 1];
+          if (!instance.isSuperscript(prev)) {
+            nonSuperWidth = width;
+          }
+        }
+        if (sub && nonSuperWidth > 0) {
+          // slide the symbol over so it lines up with superscript
+          symbol.x_offset = nonSuperWidth - width;
+          width = nonSuperWidth - symbol.width;
+          nonSuperWidth = 0;
+        }
+        if (!sup && !sub) {
+          nonSuperWidth = 0;
+        }
         width += symbol.width;
+      }
+
+      if (instance.getVertical() === ChordSymbol.VerticalJustify.TOP) {
+        instance.setTextLine(state.top_text_line);
+        state.top_text_line += lineSpaces;
+      } else {
+        instance.setTextLine(state.text_line);
+        state.text_line += lineSpaces;
       }
     }
 
@@ -166,13 +192,11 @@ export class ChordSymbol extends Modifier {
 
   // ## Prototype Methods
   //
-  // Annotations inherit from `Modifier` and is positioned correctly when
-  // in a `ModifierContext`.
-  // Create a new `Annotation` with the string `text`.
+  // chordSymbol is a modifier that creates a chord symbol above/below a chord
+  // This is the modifier version, meaning it is attached to an existing note.
   constructor() {
     super();
     this.setAttribute('type', 'ChordSymbol');
-
     this.note = null;
     this.index = null;
     this.symbolBlocks = [];
@@ -196,9 +220,10 @@ export class ChordSymbol extends Modifier {
     const text = parameters.text ? parameters.text : '';
     const symbolPosition = parameters.symbolPosition ? parameters.symbolPosition : ChordSymbol.SymbolPositions.CENTER;
     const symbolModifier = parameters.symbolModifier ? parameters.symbolModifier : ChordSymbol.SymbolModifiers.NONE;
+    const x_offset = 0;
 
     const rv = {
-      text, symbolType, symbolPosition, symbolModifier
+      text, symbolType, symbolPosition, symbolModifier, x_offset
     };
 
     rv.width = 0;
@@ -261,7 +286,8 @@ export class ChordSymbol extends Modifier {
   addLine(width, parameters) {
     parameters = parameters == null ? {} : parameters;
     parameters.symbolType = ChordSymbol.SymbolTypes.LINE;
-    parameters.line = width;
+    parameters.width = width;
+    return this.addSymbolBlock(parameters);
   }
 
   getCategory() { return ChordSymbol.CATEGORY; }
@@ -274,17 +300,19 @@ export class ChordSymbol extends Modifier {
 
   // Set vertical position of text (above or below stave). `just` must be
   // a value in `Annotation.VerticalJustify`.
-  setVerticalJustification(just) {
+  setVertical(just) {
     this.vertical = typeof (just) === 'string'
       ? ChordSymbol.VerticalJustifyString[just]
       : just;
     return this;
   }
+  getVertical() {
+    return this.vertical;
+  }
 
   // Get and set horizontal justification. `justification` is a value in
   // `Annotation.Justify`.
-  getHorizontalJustification() { return this.horizontal; }
-  setHorizontalJustification(just) {
+  setHorizontal(just) {
     this.horizontal = typeof (just) === 'string'
       ? ChordSymbol.HorizontalJustifyString[just]
       : just;
@@ -301,6 +329,10 @@ export class ChordSymbol extends Modifier {
 
   isSuperscript(symbol) {
     return symbol.symbolModifier !== null && symbol.symbolModifier === ChordSymbol.SymbolModifiers.SUPERSCRIPT;
+  }
+
+  isSubscript(symbol) {
+    return symbol.symbolModifier !== null && symbol.symbolModifier === ChordSymbol.SymbolModifiers.SUBSCRIPT;
   }
 
   // Render text beside the note.
@@ -362,23 +394,29 @@ export class ChordSymbol extends Modifier {
     }
     this.symbolBlocks.forEach((symbol) => {
       const sp = this.isSuperscript(symbol);
+      const sub = this.isSubscript(symbol);
       let curY = y;
 
       if (sp) {
         curY -= 10;
       }
+      if (sub) {
+        curY += 10;
+      }
+
       if (symbol.symbolType === ChordSymbol.SymbolTypes.TEXT) {
-        if (sp) {
+        if (sp || sub) {
           this.context.save();
           this.context.setFont(this.font.family, this.font.size / 1.3, this.font.weight);
         }
-        this.context.fillText(symbol.text, x, curY);
-        if (sp) {
+        this.context.fillText(symbol.text, x + symbol.x_offset, curY);
+        if (sp || sub) {
           this.context.restore();
         }
       } else if (symbol.symbolType === ChordSymbol.SymbolTypes.GLYPH) {
         curY -= symbol.glyph.bbox.y + symbol.glyph.bbox.h;
-        symbol.glyph.render(this.context, x + (symbol.width / 4), curY);
+        curY += (symbol.glyph.bbox.h > 12 ? symbol.glyph.bbox.h - 12 : 0);
+        symbol.glyph.render(this.context, x + (symbol.width / 4) + symbol.x_offset, curY);
       } else if (symbol.symbolType === ChordSymbol.SymbolTypes.LINE) {
         this.context.beginPath();
         this.context.setLineWidth(1); // ?
