@@ -3481,7 +3481,10 @@ function (_Modifier) {
 
   _createClass(ChordSymbol, null, [{
     key: "format",
-    // Arrange annotations within a `ModifierContext`
+    // ### format
+    // try to estimate the width of the whole chord symbol, based on the
+    // sum of the widths of the individual blocks.  Also estimate how many
+    // lines above/below the staff we need`
     value: function format(instances, state) {
       if (!instances || instances.length === 0) return false;
       var width = 0;
@@ -3503,7 +3506,7 @@ function (_Modifier) {
 
           if (symbol.symbolType === ChordSymbol.SymbolTypes && symbol.glyph.code === ChordSymbol.GLYPHS.over.code) {
             lineSpaces = 2;
-            symbol.xOffset = -1 * (symbol.glyph.width / 4);
+            symbol.width = symbol.glyph.width / 2;
           } // If a subscript immediately  follows a superscript block, try to
           // overlay them.
 
@@ -3676,16 +3679,6 @@ function (_Modifier) {
         SUPERSCRIPT: 3
       };
     }
-  }, {
-    key: "SymbolPositions",
-    get: function get() {
-      return {
-        CENTER: 1,
-        ABOVE: 2,
-        BELOW: 3,
-        EXTENT: 4
-      };
-    }
   }]);
 
   function ChordSymbol() {
@@ -3700,7 +3693,7 @@ function (_Modifier) {
     _this.note = null;
     _this.index = null;
     _this.symbolBlocks = [];
-    _this.horizontal = ChordSymbol.HorizontalJustify.CENTER;
+    _this.horizontal = ChordSymbol.HorizontalJustify.CENTER_STEM;
     _this.vertical = ChordSymbol.VerticalJustify.TOP;
     var fontFamily = 'Arial';
 
@@ -3714,7 +3707,10 @@ function (_Modifier) {
       weight: ''
     };
     return _this;
-  }
+  } // ### getSymbolBlock
+  // ChordSymbol allows multiple blocks so we can mix glyphs and font text.
+  // Each block can have its own vertical orientation
+
 
   _createClass(ChordSymbol, [{
     key: "getSymbolBlock",
@@ -3722,13 +3718,11 @@ function (_Modifier) {
       parameters = parameters == null ? {} : parameters;
       var symbolType = parameters.symbolType ? parameters.symbolType : ChordSymbol.SymbolTypes.TEXT;
       var text = parameters.text ? parameters.text : '';
-      var symbolPosition = parameters.symbolPosition ? parameters.symbolPosition : ChordSymbol.SymbolPositions.CENTER;
       var symbolModifier = parameters.symbolModifier ? parameters.symbolModifier : ChordSymbol.SymbolModifiers.NONE;
       var x_offset = 0;
       var rv = {
         text: text,
         symbolType: symbolType,
-        symbolPosition: symbolPosition,
         symbolModifier: symbolModifier,
         x_offset: x_offset
       };
@@ -3736,7 +3730,7 @@ function (_Modifier) {
 
       if (symbolType === ChordSymbol.SymbolTypes.GLYPH && typeof parameters.glyph === 'string') {
         var glyphArgs = ChordSymbol.GLYPHS[parameters.glyph];
-        var glyphPoints = 20;
+        var glyphPoints = 20; // super and subscript are smaller
 
         if (symbolModifier !== ChordSymbol.SymbolModifiers.NONE) {
           glyphPoints = glyphPoints / 1.3;
@@ -3759,7 +3753,9 @@ function (_Modifier) {
     value: function addSymbolBlock(parameters) {
       this.symbolBlocks.push(this.getSymbolBlock(parameters));
       return this;
-    }
+    } // ### Convenience functions follow that let you create different types of
+    // chord symbol parts easily
+
   }, {
     key: "addText",
     value: function addText(text, parameters) {
@@ -3897,7 +3893,7 @@ function (_Modifier) {
     key: "isSubscript",
     value: function isSubscript(symbol) {
       return symbol.symbolModifier !== null && symbol.symbolModifier === ChordSymbol.SymbolModifiers.SUBSCRIPT;
-    } // Render text beside the note.
+    } // Render text and glyphs above/below the note
 
   }, {
     key: "draw",

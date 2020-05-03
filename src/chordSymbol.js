@@ -137,16 +137,10 @@ export class ChordSymbol extends Modifier {
     };
   }
 
-  static get SymbolPositions() {
-    return {
-      CENTER: 1,
-      ABOVE: 2,
-      BELOW: 3,
-      EXTENT: 4
-    };
-  }
-
-  // Arrange annotations within a `ModifierContext`
+  // ### format
+  // try to estimate the width of the whole chord symbol, based on the
+  // sum of the widths of the individual blocks.  Also estimate how many
+  // lines above/below the staff we need`
   static format(instances, state) {
     if (!instances || instances.length === 0) return false;
 
@@ -171,7 +165,7 @@ export class ChordSymbol extends Modifier {
         if (symbol.symbolType === ChordSymbol.SymbolTypes &&
           symbol.glyph.code === ChordSymbol.GLYPHS.over.code) {
           lineSpaces = 2;
-          symbol.xOffset = -1 * (symbol.glyph.width / 4);
+          symbol.width = symbol.glyph.width / 2;
         }
 
         // If a subscript immediately  follows a superscript block, try to
@@ -218,7 +212,7 @@ export class ChordSymbol extends Modifier {
     this.note = null;
     this.index = null;
     this.symbolBlocks = [];
-    this.horizontal = ChordSymbol.HorizontalJustify.CENTER;
+    this.horizontal = ChordSymbol.HorizontalJustify.CENTER_STEM;
     this.vertical = ChordSymbol.VerticalJustify.TOP;
 
     let fontFamily = 'Arial';
@@ -232,22 +226,25 @@ export class ChordSymbol extends Modifier {
     };
   }
 
+  // ### getSymbolBlock
+  // ChordSymbol allows multiple blocks so we can mix glyphs and font text.
+  // Each block can have its own vertical orientation
   getSymbolBlock(parameters) {
     parameters = parameters == null ? {} : parameters;
     const symbolType = (parameters.symbolType ? parameters.symbolType : ChordSymbol.SymbolTypes.TEXT);
     const text = parameters.text ? parameters.text : '';
-    const symbolPosition = parameters.symbolPosition ? parameters.symbolPosition : ChordSymbol.SymbolPositions.CENTER;
     const symbolModifier = parameters.symbolModifier ? parameters.symbolModifier : ChordSymbol.SymbolModifiers.NONE;
     const x_offset = 0;
 
     const rv = {
-      text, symbolType, symbolPosition, symbolModifier, x_offset
+      text, symbolType, symbolModifier, x_offset
     };
 
     rv.width = 0;
     if (symbolType === ChordSymbol.SymbolTypes.GLYPH && typeof(parameters.glyph) === 'string') {
       const glyphArgs = ChordSymbol.GLYPHS[parameters.glyph];
       let glyphPoints = 20;
+      // super and subscript are smaller
       if (symbolModifier !== ChordSymbol.SymbolModifiers.NONE) {
         glyphPoints = glyphPoints / 1.3;
       }
@@ -267,6 +264,8 @@ export class ChordSymbol extends Modifier {
     return this;
   }
 
+  // ### Convenience functions follow that let you create different types of
+  // chord symbol parts easily
   addText(text, parameters) {
     parameters = parameters == null ? {} : parameters;
     parameters.text = text;
@@ -371,7 +370,7 @@ export class ChordSymbol extends Modifier {
     return symbol.symbolModifier !== null && symbol.symbolModifier === ChordSymbol.SymbolModifiers.SUBSCRIPT;
   }
 
-  // Render text beside the note.
+  // Render text and glyphs above/below the note
   draw() {
     this.checkContext();
 
