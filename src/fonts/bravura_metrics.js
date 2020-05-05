@@ -337,7 +337,8 @@ export const BravuraMetrics = {
       },
       csymDiagonalArrangementSlash: {
         scale: 0.6,
-        shiftY: 0
+        shiftY: 0,
+        shiftX: -2
       },
       accidentalSharp: {
         scale: 1,

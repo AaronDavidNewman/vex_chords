@@ -334,6 +334,10 @@ export const PetalumaMetrics = {
       },
     },
     chordSymbol: {
+      csymAugmented: {
+        scale: 1,
+        shiftY: -2
+      },
       csymParensLeftTall: {
         scale: 0.8,
         shiftY: 1
@@ -360,7 +364,8 @@ export const PetalumaMetrics = {
       },
       csymDiagonalArrangementSlash: {
         scale: 0.6,
-        shiftY: 0
+        shiftY: 0,
+        shiftX: -2
       },
       accidentalSharp: {
         scale: 1,

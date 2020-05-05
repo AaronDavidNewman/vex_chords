@@ -170,15 +170,20 @@ export class ChordSymbol extends Modifier {
           lineSpaces = 2;
         }
 
+        // default font size is 10, adjust glyphs for different sizes.
+        if (symbol.symbolType === ChordSymbol.symbolTypes.GLYPH) {
+          symbol.glyph.scale = symbol.glyph.scale * (instance.font.size / 10);
+        }
+
         if (symbol.symbolType === ChordSymbol.symbolTypes.GLYPH &&
           symbol.glyph.code === ChordSymbol.glyphs.over.code) {
           lineSpaces = 2;
-          symbol.xOffset += -2;
+          symbol.xOffset += symbol.glyph.metrics.x_shift;
         }
 
         if (j > 0 && instance.symbolBlocks[j - 1].symbolType === ChordSymbol.symbolTypes.GLYPH &&
           instance.symbolBlocks[j - 1].glyph.code === ChordSymbol.glyphs.over.code) {
-          symbol.xOffset += -2;
+          symbol.xOffset += instance.symbolBlocks[j - 1].glyph.metrics.x_shift;
         }
 
         // If a subscript immediately  follows a superscript block, try to
@@ -266,13 +271,13 @@ export class ChordSymbol extends Modifier {
     // Move things into the '/' over bar
     if (symbol.symbolType === ChordSymbol.symbolTypes.GLYPH &&
       symbol.glyph.code === ChordSymbol.glyphs.over.code) {
-      rv += -2;
+      rv += symbol.glyph.metrics.x_shift;
     }
 
     if (prevSymbol !== null &&
       prevSymbol.symbolType === ChordSymbol.symbolTypes.GLYPH &&
       prevSymbol.glyph.code === ChordSymbol.glyphs.over.code) {
-      rv += -2;
+      rv += prevSymbol.glyph.metrics.x_shift;
     }
 
     // For superscripts that follow a letter without much top part, move it to the
@@ -284,6 +289,8 @@ export class ChordSymbol extends Modifier {
       preKernLower = ChordSymbol.lowerKerningText.some((xx) => xx === prevSymbol.text[prevSymbol.text.length - 1]);
     }
 
+    // TODO: adjustkern for  for font size.
+    // Where should this constant live?
     if (preKernUpper && symbol.symbolModifier === ChordSymbol.symbolModifiers.SUPERSCRIPT) {
       rv += -2;
     }
