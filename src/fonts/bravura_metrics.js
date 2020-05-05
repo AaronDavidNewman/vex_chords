@@ -60,7 +60,6 @@ export const BravuraMetrics = {
         }
       }
     },
-
     // These may no longer be necessary
     lineCount: {
       '8': { point: 55, shiftY: 14 },
@@ -70,7 +69,6 @@ export const BravuraMetrics = {
       '4': { point: 23, shiftY: -12 },
     }
   },
-
   pedalMarking: {
     up: {
       point: 40
@@ -308,5 +306,47 @@ export const BravuraMetrics = {
         }
       },
     },
+    chordSymbol: {
+      csymAugmented: {
+        scale: 1,
+        shiftY: -2
+      },
+      csymParensLeftTall: {
+        scale: 0.8,
+        shiftY: 1
+      },
+      csymParensRightTall: {
+        scale: 0.8,
+        shiftY: 1
+      },
+      csymBracketLeftTall: {
+        scale: 0.8,
+        shiftY: 1
+      },
+      csymBracketRightTall: {
+        scale: 0.8,
+        shiftY: 1
+      },
+      csymParensLeftVeryTall: {
+        scale: 0.8,
+        shiftY: 0
+      },
+      csymParensRightVeryTall: {
+        scale: 0.8,
+        shiftY: 0
+      },
+      csymDiagonalArrangementSlash: {
+        scale: 0.6,
+        shiftY: 0
+      },
+      accidentalSharp: {
+        scale: 1,
+        shiftY: -3
+      },
+      accidentalFlat: {
+        scale: 1,
+        shiftY: -2
+      }
+    }
   }
 };
